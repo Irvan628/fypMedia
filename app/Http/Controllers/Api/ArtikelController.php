@@ -14,7 +14,7 @@ class ArtikelController extends Controller
 
     public function index()
     {
-        $data = Artikel::orderBy('id', 'asc') ->get(); //diambil dari model Artikel
+        $data = Artikel::orderBy('id', 'asc')->get(); //diambil dari model Artikel
         return response()->json([
             'status' => true,
             'message' => 'data ditemukan',
@@ -22,58 +22,44 @@ class ArtikelController extends Controller
         ], 200); //200 untuk berhasil
 
     }
+
     public function store(Request $request)
-{
-    $rules = [
-        'gambar' => 'required',
-        'judul' => 'required',
-        'deskripsi' => 'required',
-        'nama_penulis' => 'required',
-        'editor' => 'required',
-    ];
+    {
 
-    $validator = Validator::make($request->all(), $rules);
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Gagal menambahkan data',
-            'data' => $validator->errors()
-        ]);
-    }
-    $data = [
-        'gambar' => $request->gambar,
-        'judul' => $request->judul,
-        'deskripsi' => $request->deskripsi,
-        'nama_penulis' => $request->nama_penulis,
-        'editor' => $request->editor
-    ];
+        $dataartikel = new Artikel;
+        $rules = [
+            'gambar' => 'required',
+            'judul' => 'required',
+            'deskripsi' => 'required',
+            'nama_penulis' => 'required',
+            'editor' => 'required',
+        ];
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menambah data',
+                'data' => $validator->errors()
+            ]);
+        }
+        
+        if ($request->hasFile('gambar')) {
+            $gambar = $request->file('gambar');
+            $path = $gambar->store('public/images');
+            $dataartikel->gambar = $path;
+        }
+        $dataartikel->judul = $request->judul;
+        $dataartikel->deskripsi = $request->deskripsi;
+        $dataartikel->nama_penulis = $request->nama_penulis;
+        $dataartikel->editor = $request->editor;
+        $post = $dataartikel->save();
 
-    $client = new Client();
-    $url = "http://localhost:8000/api/artikel"; 
-    $response = $client->post($url, [
-        'json' => $data,
-        'headers' => [
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-        ],
-    ]);
-
-    $statusCode = $response->getStatusCode();
-
-    if ($statusCode == 200) { //status code 200 untuk berhasill dan 404 untuk gagal
         return response()->json([
             'status' => true,
-            'message' => 'Data berhasil ditambahkan',
+            'message' => 'Data berhasil ditambah',
+            'data' => $dataartikel
         ], 200);
-    } else {
-        return response()->json([
-            'status' => false,
-            'message' => 'Gagal menambahkan data',
-        ], $statusCode);
     }
-}
-
-
 
     /**
      * Display the specified resource.
@@ -98,10 +84,9 @@ class ArtikelController extends Controller
         }
     }
 
-
     /**
-    * Update the specified resource in storage.
-    */
+     * Update the specified resource in storage.
+     */
     public function update(Request $request, string $id)
     {
         $dataArtikel = Artikel::find($id);
@@ -109,7 +94,7 @@ class ArtikelController extends Controller
         if (!$dataArtikel) {
             return response()->json([
                 'status' => false,
-                'message' => 'Data tidak ditemukan',
+                'message' => 'Data tidak ditemukan'
             ], 404);
         }
 
@@ -136,7 +121,7 @@ class ArtikelController extends Controller
         $dataArtikel->nama_penulis = $request->nama_penulis;
         $dataArtikel->editor = $request->editor;
 
-        // update ganbar
+        // update gambar
         if ($request->hasFile('gambar')) {
             Storage::delete($dataArtikel->gambar);
             $gambar = $request->file('gambar');
@@ -151,7 +136,6 @@ class ArtikelController extends Controller
             'data' => $dataArtikel
         ], 200);
     }
-
 
     /**
      * Remove the specified resource from storage.

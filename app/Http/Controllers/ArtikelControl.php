@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\Artikel; // Added the Artikel model import
-
+use App\Models\Artikel; 
 class ArtikelControl extends Controller
 {
     /**
@@ -33,24 +32,26 @@ class ArtikelControl extends Controller
 
     public function store(Request $request)
     {
-        $gambar = $request->file('gambar'); // Changed to get the file input
         $judul = $request->judul;
         $deskripsi = $request->deskripsi;
         $nama_penulis = $request->nama_penulis;
         $editor = $request->editor;
-
-        // Save the uploaded image to the desired directory
         $gambar = $request->file('gambar');
         $path = $gambar->store('public/storage/images');
-        $artikel = new Artikel;
-        $artikel->gambar = $path;
-        $artikel->judul = $judul;
-        $artikel->deskripsi = $deskripsi;
-        $artikel->nama_penulis = $nama_penulis;
-        $artikel->editor = $editor;
-        $artikel->save();
 
-        return redirect()->to('artikel')->with('success', 'Berhasil Memasukkan Data');
+
+        $client = new Client();
+        $url = "http://localhost:8000/api/artikel";
+        $response = $client->request('POST', $url);
+        $content = $response->getBody()->getContents();
+        $contentArray = json_decode($content, true);
+        if($contentArray['status'] != true){
+            $error = $contentArray['data'];
+            return redirect()->to('artikel')->with($error)->withInput();
+        } else {
+            return redirect()->to('artikel')->with('succes', 'Berhasil menambahkan data');
+        }
+
     }
 
     /**
